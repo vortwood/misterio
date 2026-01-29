@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { getAudioContext } from "@/lib/audio-context";
 
 type GlitchType = "colorBars" | "vhsTracking" | null;
 
@@ -12,15 +13,10 @@ interface TVGlitchProps {
 
 export function TVGlitch({ enabled = true, initialDelay = 0 }: TVGlitchProps) {
   const [glitchType, setGlitchType] = useState<GlitchType>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
   const lastGlitchRef = useRef<GlitchType>("vhsTracking");
 
   const playStaticNoise = async (duration: number) => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
-    }
-
-    const ctx = audioContextRef.current;
+    const ctx = getAudioContext();
 
     // Resume if suspended (required by browsers)
     if (ctx.state === "suspended") {
@@ -93,9 +89,6 @@ export function TVGlitch({ enabled = true, initialDelay = 0 }: TVGlitchProps) {
 
     return () => {
       clearTimeout(timeoutId);
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
     };
   }, [enabled, initialDelay]);
 

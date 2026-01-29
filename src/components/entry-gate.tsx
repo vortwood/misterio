@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, ReactNode } from "react";
+import { useState, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { unlockAudio } from "@/lib/audio-context";
 
 interface EntryGateProps {
   children: ReactNode;
@@ -11,18 +12,12 @@ interface EntryGateProps {
 export function EntryGate({ children, onEnter }: EntryGateProps) {
   const [hasEntered, setHasEntered] = useState(false);
   const [selectedOption, setSelectedOption] = useState(0);
-  const audioContextRef = useRef<AudioContext | null>(null);
 
-  const handleEnter = () => {
+  const handleEnter = async () => {
     if (selectedOption !== 0) return;
 
-    // Initialize audio context on user interaction
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
-    }
-    if (audioContextRef.current.state === "suspended") {
-      audioContextRef.current.resume();
-    }
+    // Unlock audio on user interaction (works on iOS/mobile)
+    await unlockAudio();
 
     setHasEntered(true);
     onEnter();

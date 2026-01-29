@@ -5,7 +5,12 @@ import { motion } from "framer-motion";
 
 type GlitchType = "colorBars" | "vhsTracking" | null;
 
-export function TVGlitch() {
+interface TVGlitchProps {
+  enabled?: boolean;
+  initialDelay?: number;
+}
+
+export function TVGlitch({ enabled = true, initialDelay = 0 }: TVGlitchProps) {
   const [glitchType, setGlitchType] = useState<GlitchType>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastGlitchRef = useRef<GlitchType>("vhsTracking");
@@ -53,33 +58,9 @@ export function TVGlitch() {
     noise.stop(ctx.currentTime + duration);
   };
 
-  // Initialize audio context on first user interaction
   useEffect(() => {
-    const initAudio = () => {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContext();
-      }
-      if (audioContextRef.current.state === "suspended") {
-        audioContextRef.current.resume();
-      }
-      // Remove listeners after first interaction
-      window.removeEventListener("click", initAudio);
-      window.removeEventListener("touchstart", initAudio);
-      window.removeEventListener("keydown", initAudio);
-    };
+    if (!enabled) return;
 
-    window.addEventListener("click", initAudio);
-    window.addEventListener("touchstart", initAudio);
-    window.addEventListener("keydown", initAudio);
-
-    return () => {
-      window.removeEventListener("click", initAudio);
-      window.removeEventListener("touchstart", initAudio);
-      window.removeEventListener("keydown", initAudio);
-    };
-  }, []);
-
-  useEffect(() => {
     const triggerGlitch = () => {
       // Alternate between effects
       const nextGlitch: GlitchType = lastGlitchRef.current === "colorBars" ? "vhsTracking" : "colorBars";
@@ -104,7 +85,11 @@ export function TVGlitch() {
       }, delay);
     };
 
-    let timeoutId = scheduleNextGlitch();
+    // First glitch after initialDelay, then random intervals
+    let timeoutId = setTimeout(() => {
+      triggerGlitch();
+      timeoutId = scheduleNextGlitch();
+    }, initialDelay);
 
     return () => {
       clearTimeout(timeoutId);
@@ -112,7 +97,7 @@ export function TVGlitch() {
         audioContextRef.current.close();
       }
     };
-  }, []);
+  }, [enabled, initialDelay]);
 
   if (!glitchType) return null;
 
